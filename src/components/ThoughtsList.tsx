@@ -19,6 +19,7 @@ const ThoughtsList = ({ refreshTrigger }: { refreshTrigger: number }) => {
     const fetchThoughts = async () => {
       setIsLoading(true);
       try {
+        // Use the Supabase client with type assertions to bypass type checking
         const { data, error } = await supabase
           .from('thoughts')
           .select('thought_id, content, created_at')
@@ -26,7 +27,7 @@ const ThoughtsList = ({ refreshTrigger }: { refreshTrigger: number }) => {
           
         if (error) throw error;
         
-        setThoughts(data || []);
+        setThoughts(data as Thought[] || []);
       } catch (error) {
         console.error("Error fetching thoughts:", error);
         toast({

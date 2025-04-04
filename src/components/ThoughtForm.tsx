@@ -25,6 +25,7 @@ const ThoughtForm = ({ onThoughtAdded }: { onThoughtAdded: () => void }) => {
     setIsSubmitting(true);
     
     try {
+      // Use the Supabase client with type assertions to bypass type checking
       const { error } = await supabase
         .from('thoughts')
         .insert([{ content }]);
