@@ -1,9 +1,10 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { format, formatDistance } from "date-fns";
+import { format, formatDistance, isAfter, isBefore, parseISO } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { SortOption } from "./ThoughtsFilter";
 
 interface Thought {
   thought_id: string;
@@ -11,8 +12,24 @@ interface Thought {
   created_at: string;
 }
 
-const ThoughtsList = ({ refreshTrigger }: { refreshTrigger: number }) => {
+interface ThoughtsListProps {
+  refreshTrigger: number;
+  searchQuery?: string;
+  sortOption?: SortOption;
+  dateRange?: {
+    startDate: Date | null;
+    endDate: Date | null;
+  };
+}
+
+const ThoughtsList = ({ 
+  refreshTrigger, 
+  searchQuery = "",
+  sortOption = "newest",
+  dateRange = { startDate: null, endDate: null }
+}: ThoughtsListProps) => {
   const [thoughts, setThoughts] = useState<Thought[]>([]);
+  const [filteredThoughts, setFilteredThoughts] = useState<Thought[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -31,7 +48,7 @@ const ThoughtsList = ({ refreshTrigger }: { refreshTrigger: number }) => {
           .from('thoughts')
           .select('thought_id, content, created_at')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: sortOption === "oldest" });
           
         if (error) throw error;
         
@@ -49,7 +66,43 @@ const ThoughtsList = ({ refreshTrigger }: { refreshTrigger: number }) => {
     };
     
     fetchThoughts();
-  }, [refreshTrigger, toast, user]);
+  }, [refreshTrigger, toast, user, sortOption]);
+  
+  // Apply filters whenever thoughts, searchQuery, or dateRange changes
+  useEffect(() => {
+    let filtered = [...thoughts];
+    
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(thought => 
+        thought.content.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply date range filter
+    if (dateRange.startDate || dateRange.endDate) {
+      filtered = filtered.filter(thought => {
+        const thoughtDate = parseISO(thought.created_at);
+        let matches = true;
+        
+        if (dateRange.startDate) {
+          matches = matches && isAfter(thoughtDate, dateRange.startDate);
+        }
+        
+        if (dateRange.endDate) {
+          // Add one day to make the end date inclusive
+          const endDatePlusOne = new Date(dateRange.endDate);
+          endDatePlusOne.setDate(endDatePlusOne.getDate() + 1);
+          matches = matches && isBefore(thoughtDate, endDatePlusOne);
+        }
+        
+        return matches;
+      });
+    }
+    
+    setFilteredThoughts(filtered);
+  }, [thoughts, searchQuery, dateRange]);
   
   if (isLoading) {
     return (
@@ -59,18 +112,27 @@ const ThoughtsList = ({ refreshTrigger }: { refreshTrigger: number }) => {
     );
   }
   
-  if (thoughts.length === 0) {
-    return (
-      <div className="bg-muted/40 rounded-lg p-6 text-center">
-        <p className="text-muted-foreground">You haven't saved any thoughts yet.</p>
-        <p className="text-sm">Your thoughts will appear here once you save them.</p>
-      </div>
-    );
+  if (filteredThoughts.length === 0) {
+    if (thoughts.length === 0) {
+      return (
+        <div className="bg-muted/40 rounded-lg p-6 text-center">
+          <p className="text-muted-foreground">You haven't saved any thoughts yet.</p>
+          <p className="text-sm">Your thoughts will appear here once you save them.</p>
+        </div>
+      );
+    } else {
+      return (
+        <div className="bg-muted/40 rounded-lg p-6 text-center">
+          <p className="text-muted-foreground">No thoughts match your search criteria.</p>
+          <p className="text-sm">Try adjusting your filters or search query.</p>
+        </div>
+      );
+    }
   }
   
   return (
     <div className="space-y-4">
-      {thoughts.map((thought) => (
+      {filteredThoughts.map((thought) => (
         <div key={thought.thought_id} className="bg-card rounded-lg border p-4">
           <p className="whitespace-pre-wrap mb-2">{thought.content}</p>
           <div className="text-xs text-muted-foreground">

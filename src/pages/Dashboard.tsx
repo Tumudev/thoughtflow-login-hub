@@ -5,14 +5,37 @@ import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
 import ThoughtForm from "@/components/ThoughtForm";
 import ThoughtsList from "@/components/ThoughtsList";
+import SearchBar from "@/components/SearchBar";
+import ThoughtsFilter, { SortOption } from "@/components/ThoughtsFilter";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOption, setSortOption] = useState<SortOption>("newest");
+  const [dateRange, setDateRange] = useState<{
+    startDate: Date | null;
+    endDate: Date | null;
+  }>({
+    startDate: null,
+    endDate: null,
+  });
 
   const handleThoughtAdded = () => {
     // Increment trigger to refresh the thoughts list
     setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleSortChange = (option: SortOption) => {
+    setSortOption(option);
+  };
+
+  const handleDateFilterChange = (startDate: Date | null, endDate: Date | null) => {
+    setDateRange({ startDate, endDate });
   };
 
   return (
@@ -41,7 +64,25 @@ const Dashboard = () => {
           
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4">My Thought Stream</h2>
-            <ThoughtsList refreshTrigger={refreshTrigger} />
+            
+            <div className="space-y-4 mb-6">
+              <SearchBar 
+                onSearch={handleSearch} 
+                placeholder="Search thoughts..." 
+              />
+              
+              <ThoughtsFilter 
+                onSortChange={handleSortChange}
+                onDateFilterChange={handleDateFilterChange}
+              />
+            </div>
+            
+            <ThoughtsList 
+              refreshTrigger={refreshTrigger} 
+              searchQuery={searchQuery}
+              sortOption={sortOption}
+              dateRange={dateRange}
+            />
           </div>
         </div>
       </main>
