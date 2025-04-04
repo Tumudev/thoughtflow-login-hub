@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Search } from "lucide-react";
@@ -11,12 +10,7 @@ import {
 } from "@/components/ui/popover";
 import Tag from "@/components/Tag";
 import { useToast } from "@/components/ui/use-toast";
-
-interface TagType {
-  tag_id: string;
-  name: string;
-  color: string;
-}
+import { TagType } from "@/types/tag";
 
 interface TagSelectorProps {
   selectedTags: TagType[];

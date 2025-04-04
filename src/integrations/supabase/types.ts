@@ -9,10 +9,68 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      tags: {
+        Row: {
+          color: string
+          created_at: string
+          name: string
+          tag_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          name: string
+          tag_id?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          name?: string
+          tag_id?: string
+        }
+        Relationships: []
+      }
+      thought_tags: {
+        Row: {
+          created_at: string
+          id: string
+          tag_id: string
+          thought_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tag_id: string
+          thought_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tag_id?: string
+          thought_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thought_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["tag_id"]
+          },
+          {
+            foreignKeyName: "thought_tags_thought_id_fkey"
+            columns: ["thought_id"]
+            isOneToOne: false
+            referencedRelation: "thoughts"
+            referencedColumns: ["thought_id"]
+          },
+        ]
+      }
       thoughts: {
         Row: {
           content: string
           created_at: string
+          is_draft: boolean
           thought_id: string
           updated_at: string
           user_id: string
@@ -20,6 +78,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          is_draft?: boolean
           thought_id?: string
           updated_at?: string
           user_id: string
@@ -27,6 +86,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          is_draft?: boolean
           thought_id?: string
           updated_at?: string
           user_id?: string
@@ -40,6 +100,36 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      user_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          email_notifications: boolean
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email_notifications?: boolean
+          id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email_notifications?: boolean
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       users: {
         Row: {

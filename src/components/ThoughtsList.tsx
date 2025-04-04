@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, formatDistance, isAfter, isBefore, parseISO } from "date-fns";
@@ -6,13 +5,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { SortOption } from "./ThoughtsFilter";
 import Tag from "./Tag";
-import { Draft, PanelLeftOpen } from "lucide-react";
-
-interface TagType {
-  tag_id: string;
-  name: string;
-  color: string;
-}
+import { FileEdit, PanelLeftOpen } from "lucide-react";
+import { TagType } from "@/types/tag";
 
 interface Thought {
   thought_id: string;
@@ -114,11 +108,9 @@ const ThoughtsList = ({
     fetchThoughts();
   }, [refreshTrigger, toast, user, sortOption]);
   
-  // Apply filters whenever thoughts, searchQuery, dateRange, or selectedTagIds changes
   useEffect(() => {
     let filtered = [...thoughts];
     
-    // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(thought => 
@@ -126,7 +118,6 @@ const ThoughtsList = ({
       );
     }
     
-    // Apply date range filter
     if (dateRange.startDate || dateRange.endDate) {
       filtered = filtered.filter(thought => {
         const thoughtDate = parseISO(thought.created_at);
@@ -137,7 +128,6 @@ const ThoughtsList = ({
         }
         
         if (dateRange.endDate) {
-          // Add one day to make the end date inclusive
           const endDatePlusOne = new Date(dateRange.endDate);
           endDatePlusOne.setDate(endDatePlusOne.getDate() + 1);
           matches = matches && isBefore(thoughtDate, endDatePlusOne);
@@ -147,12 +137,10 @@ const ThoughtsList = ({
       });
     }
     
-    // Apply tag filter
     if (selectedTagIds.length > 0) {
       filtered = filtered.filter(thought => {
         if (!thought.tags || thought.tags.length === 0) return false;
         
-        // Check if thought has any of the selected tags
         return thought.tags.some(tag => selectedTagIds.includes(tag.tag_id));
       });
     }
@@ -162,7 +150,6 @@ const ThoughtsList = ({
   
   const handleTagClick = (tagId: string) => {
     console.log(`Clicked on tag: ${tagId}`);
-    // Handle tag click if needed
   };
   
   if (isLoading) {
@@ -201,7 +188,7 @@ const ThoughtsList = ({
             </div>
             {thought.is_draft && (
               <div className="ml-2 flex items-center text-amber-500">
-                <Draft size={16} className="mr-1" />
+                <FileEdit size={16} className="mr-1" />
                 <span className="text-xs font-medium">Draft</span>
               </div>
             )}

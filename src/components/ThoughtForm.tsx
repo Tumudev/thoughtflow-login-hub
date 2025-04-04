@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,12 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import TagSelector from "@/components/TagSelector";
 import { SaveIcon } from "lucide-react";
-
-interface TagType {
-  tag_id: string;
-  name: string;
-  color: string;
-}
+import { TagType } from "@/types/tag";
 
 const ThoughtForm = ({ onThoughtAdded }: { onThoughtAdded: () => void }) => {
   const [content, setContent] = useState("");

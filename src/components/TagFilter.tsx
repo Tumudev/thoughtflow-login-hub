@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -6,12 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CheckIcon, Tag as TagIcon, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import Tag from "@/components/Tag";
-
-interface TagType {
-  tag_id: string;
-  name: string;
-  color: string;
-}
+import { TagType } from "@/types/tag";
 
 interface TagFilterProps {
   selectedTagIds: string[];

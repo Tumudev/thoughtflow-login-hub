@@ -15,6 +15,11 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+interface UserProfile {
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
 const UserNav = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
