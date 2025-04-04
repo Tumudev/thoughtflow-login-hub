@@ -4,11 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ThoughtForm = ({ onThoughtAdded }: { onThoughtAdded: () => void }) => {
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,14 +23,26 @@ const ThoughtForm = ({ onThoughtAdded }: { onThoughtAdded: () => void }) => {
       });
       return;
     }
+
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to save thoughts",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsSubmitting(true);
     
     try {
-      // Use the Supabase client with type assertions to bypass type checking
+      // Include the user_id from the auth context
       const { error } = await supabase
         .from('thoughts')
-        .insert([{ content }]);
+        .insert({
+          content,
+          user_id: user.id
+        });
         
       if (error) throw error;
       

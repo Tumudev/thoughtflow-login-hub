@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, formatDistance } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Thought {
   thought_id: string;
@@ -14,15 +15,22 @@ const ThoughtsList = ({ refreshTrigger }: { refreshTrigger: number }) => {
   const [thoughts, setThoughts] = useState<Thought[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchThoughts = async () => {
+      if (!user) {
+        setThoughts([]);
+        setIsLoading(false);
+        return;
+      }
+      
       setIsLoading(true);
       try {
-        // Use the Supabase client with type assertions to bypass type checking
         const { data, error } = await supabase
           .from('thoughts')
           .select('thought_id, content, created_at')
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false });
           
         if (error) throw error;
@@ -41,7 +49,7 @@ const ThoughtsList = ({ refreshTrigger }: { refreshTrigger: number }) => {
     };
     
     fetchThoughts();
-  }, [refreshTrigger, toast]);
+  }, [refreshTrigger, toast, user]);
   
   if (isLoading) {
     return (
