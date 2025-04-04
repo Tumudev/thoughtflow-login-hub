@@ -11,6 +11,7 @@ const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({ email: "", password: "" });
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
 
@@ -35,11 +36,20 @@ const LoginForm = () => {
     return isValid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
-      login(email, password);
+      setIsLoading(true);
+      try {
+        await login(email, password);
+        // Auth context will handle redirection and toast
+      } catch (error) {
+        console.error("Login submission error:", error);
+        // Auth context already handles the toast error
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       toast({
         title: "Error",
@@ -59,6 +69,7 @@ const LoginForm = () => {
           placeholder="you@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          disabled={isLoading}
         />
         {errors.email && (
           <p className="text-destructive text-sm">{errors.email}</p>
@@ -77,13 +88,14 @@ const LoginForm = () => {
           placeholder="••••••••"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          disabled={isLoading}
         />
         {errors.password && (
           <p className="text-destructive text-sm">{errors.password}</p>
         )}
       </div>
-      <Button type="submit" className="w-full">
-        Sign In
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading ? "Signing In..." : "Sign In"}
       </Button>
       <div className="text-center text-sm">
         Don't have an account?{" "}

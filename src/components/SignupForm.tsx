@@ -11,6 +11,7 @@ const SignupForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({
     email: "",
     password: "",
@@ -55,11 +56,20 @@ const SignupForm = () => {
     return isValid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
-      signup(email, password);
+      setIsLoading(true);
+      try {
+        await signup(email, password);
+        // Auth context will handle redirection and toast
+      } catch (error) {
+        console.error("Signup submission error:", error);
+        // Auth context already handles the toast error
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       toast({
         title: "Error",
@@ -79,6 +89,7 @@ const SignupForm = () => {
           placeholder="you@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          disabled={isLoading}
         />
         {errors.email && (
           <p className="text-destructive text-sm">{errors.email}</p>
@@ -92,6 +103,7 @@ const SignupForm = () => {
           placeholder="••••••••"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          disabled={isLoading}
         />
         {errors.password && (
           <p className="text-destructive text-sm">{errors.password}</p>
@@ -105,13 +117,14 @@ const SignupForm = () => {
           placeholder="••••••••"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          disabled={isLoading}
         />
         {errors.confirmPassword && (
           <p className="text-destructive text-sm">{errors.confirmPassword}</p>
         )}
       </div>
-      <Button type="submit" className="w-full">
-        Create Account
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading ? "Creating Account..." : "Create Account"}
       </Button>
       <div className="text-center text-sm">
         Already have an account?{" "}
