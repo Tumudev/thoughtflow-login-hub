@@ -5,11 +5,21 @@ import { format, formatDistance, isAfter, isBefore, parseISO } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { SortOption } from "./ThoughtsFilter";
+import Tag from "./Tag";
+import { Draft, PanelLeftOpen } from "lucide-react";
+
+interface TagType {
+  tag_id: string;
+  name: string;
+  color: string;
+}
 
 interface Thought {
   thought_id: string;
   content: string;
   created_at: string;
+  is_draft: boolean;
+  tags?: TagType[];
 }
 
 interface ThoughtsListProps {
@@ -20,13 +30,15 @@ interface ThoughtsListProps {
     startDate: Date | null;
     endDate: Date | null;
   };
+  selectedTagIds?: string[];
 }
 
 const ThoughtsList = ({ 
   refreshTrigger, 
   searchQuery = "",
   sortOption = "newest",
-  dateRange = { startDate: null, endDate: null }
+  dateRange = { startDate: null, endDate: null },
+  selectedTagIds = []
 }: ThoughtsListProps) => {
   const [thoughts, setThoughts] = useState<Thought[]>([]);
   const [filteredThoughts, setFilteredThoughts] = useState<Thought[]>([]);
@@ -44,15 +56,49 @@ const ThoughtsList = ({
       
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
+        // Fetch all thoughts for the user
+        const { data: thoughtsData, error: thoughtsError } = await supabase
           .from('thoughts')
-          .select('thought_id, content, created_at')
+          .select('thought_id, content, created_at, is_draft')
           .eq('user_id', user.id)
           .order('created_at', { ascending: sortOption === "oldest" });
           
-        if (error) throw error;
+        if (thoughtsError) throw thoughtsError;
         
-        setThoughts(data as Thought[] || []);
+        const thoughts = thoughtsData || [];
+        
+        // Fetch tag data for all thoughts
+        const thoughtIds = thoughts.map(t => t.thought_id);
+        
+        if (thoughtIds.length) {
+          const { data: tagsData, error: tagsError } = await supabase
+            .from('thought_tags')
+            .select('thought_id, tags (tag_id, name, color)')
+            .in('thought_id', thoughtIds);
+            
+          if (tagsError) throw tagsError;
+          
+          // Create a map of thought_id to array of tags
+          const tagsByThoughtId: Record<string, TagType[]> = {};
+          
+          tagsData?.forEach((item: any) => {
+            const thoughtId = item.thought_id;
+            const tag = item.tags;
+            
+            if (!tagsByThoughtId[thoughtId]) {
+              tagsByThoughtId[thoughtId] = [];
+            }
+            
+            tagsByThoughtId[thoughtId].push(tag);
+          });
+          
+          // Add tags to each thought
+          thoughts.forEach(thought => {
+            thought.tags = tagsByThoughtId[thought.thought_id] || [];
+          });
+        }
+        
+        setThoughts(thoughts);
       } catch (error) {
         console.error("Error fetching thoughts:", error);
         toast({
@@ -68,7 +114,7 @@ const ThoughtsList = ({
     fetchThoughts();
   }, [refreshTrigger, toast, user, sortOption]);
   
-  // Apply filters whenever thoughts, searchQuery, or dateRange changes
+  // Apply filters whenever thoughts, searchQuery, dateRange, or selectedTagIds changes
   useEffect(() => {
     let filtered = [...thoughts];
     
@@ -101,8 +147,23 @@ const ThoughtsList = ({
       });
     }
     
+    // Apply tag filter
+    if (selectedTagIds.length > 0) {
+      filtered = filtered.filter(thought => {
+        if (!thought.tags || thought.tags.length === 0) return false;
+        
+        // Check if thought has any of the selected tags
+        return thought.tags.some(tag => selectedTagIds.includes(tag.tag_id));
+      });
+    }
+    
     setFilteredThoughts(filtered);
-  }, [thoughts, searchQuery, dateRange]);
+  }, [thoughts, searchQuery, dateRange, selectedTagIds]);
+  
+  const handleTagClick = (tagId: string) => {
+    console.log(`Clicked on tag: ${tagId}`);
+    // Handle tag click if needed
+  };
   
   if (isLoading) {
     return (
@@ -134,7 +195,33 @@ const ThoughtsList = ({
     <div className="space-y-4">
       {filteredThoughts.map((thought) => (
         <div key={thought.thought_id} className="bg-card rounded-lg border p-4">
-          <p className="whitespace-pre-wrap mb-2">{thought.content}</p>
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex-1">
+              <p className="whitespace-pre-wrap">{thought.content}</p>
+            </div>
+            {thought.is_draft && (
+              <div className="ml-2 flex items-center text-amber-500">
+                <Draft size={16} className="mr-1" />
+                <span className="text-xs font-medium">Draft</span>
+              </div>
+            )}
+          </div>
+          
+          {thought.tags && thought.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-3 mb-2">
+              {thought.tags.map(tag => (
+                <Tag
+                  key={tag.tag_id}
+                  id={tag.tag_id}
+                  name={tag.name}
+                  color={tag.color}
+                  size="sm"
+                  onClick={handleTagClick}
+                />
+              ))}
+            </div>
+          )}
+          
           <div className="text-xs text-muted-foreground">
             <span title={format(new Date(thought.created_at), "PPpp")}>
               {formatDistance(new Date(thought.created_at), new Date(), { addSuffix: true })}

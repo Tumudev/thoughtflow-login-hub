@@ -1,18 +1,20 @@
 
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
 import ThoughtForm from "@/components/ThoughtForm";
 import ThoughtsList from "@/components/ThoughtsList";
 import SearchBar from "@/components/SearchBar";
 import ThoughtsFilter, { SortOption } from "@/components/ThoughtsFilter";
+import TagFilter from "@/components/TagFilter";
+import UserNav from "@/components/UserNav";
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState<SortOption>("newest");
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<{
     startDate: Date | null;
     endDate: Date | null;
@@ -38,19 +40,16 @@ const Dashboard = () => {
     setDateRange({ startDate, endDate });
   };
 
+  const handleTagsChange = (tagIds: string[]) => {
+    setSelectedTagIds(tagIds);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Logo />
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">
-              {user?.email}
-            </span>
-            <Button variant="outline" onClick={logout}>
-              Sign out
-            </Button>
-          </div>
+          <UserNav />
         </div>
       </header>
       <main className="container mx-auto px-4 py-8">
@@ -71,10 +70,17 @@ const Dashboard = () => {
                 placeholder="Search thoughts..." 
               />
               
-              <ThoughtsFilter 
-                onSortChange={handleSortChange}
-                onDateFilterChange={handleDateFilterChange}
-              />
+              <div className="flex flex-col sm:flex-row gap-4">
+                <ThoughtsFilter 
+                  onSortChange={handleSortChange}
+                  onDateFilterChange={handleDateFilterChange}
+                />
+                
+                <TagFilter
+                  selectedTagIds={selectedTagIds}
+                  onTagsChange={handleTagsChange}
+                />
+              </div>
             </div>
             
             <ThoughtsList 
@@ -82,6 +88,7 @@ const Dashboard = () => {
               searchQuery={searchQuery}
               sortOption={sortOption}
               dateRange={dateRange}
+              selectedTagIds={selectedTagIds}
             />
           </div>
         </div>
