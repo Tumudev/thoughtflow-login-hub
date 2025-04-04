@@ -1,10 +1,19 @@
 
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
+import ThoughtForm from "@/components/ThoughtForm";
+import ThoughtsList from "@/components/ThoughtsList";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleThoughtAdded = () => {
+    // Increment trigger to refresh the thoughts list
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -22,30 +31,17 @@ const Dashboard = () => {
         </div>
       </header>
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-3xl font-bold mb-6">My Thoughts</h1>
           
-          <div className="bg-card rounded-xl border p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Welcome to ThoughtFlow</h2>
-            <p className="text-muted-foreground mb-4">
-              This is your personal dashboard where you can manage your thoughts and ideas.
-            </p>
-            <div className="bg-accent p-4 rounded-lg">
-              <p className="text-sm">
-                This is a protected route. You need to be authenticated to view this page.
-              </p>
-            </div>
+          <div className="bg-card rounded-xl border p-6 mb-8">
+            <h2 className="text-xl font-semibold mb-4">Add a New Thought</h2>
+            <ThoughtForm onThoughtAdded={handleThoughtAdded} />
           </div>
           
-          <div className="grid gap-6 md:grid-cols-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-card rounded-xl border p-6">
-                <h3 className="font-medium mb-2">Feature {i + 1}</h3>
-                <p className="text-sm text-muted-foreground">
-                  This is a placeholder for future features of ThoughtFlow.
-                </p>
-              </div>
-            ))}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">My Thought Stream</h2>
+            <ThoughtsList refreshTrigger={refreshTrigger} />
           </div>
         </div>
       </main>
